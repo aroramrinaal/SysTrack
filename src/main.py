@@ -84,6 +84,42 @@ def disk_usage():
 
     console.print(table)
 
+@app.command()
+def network_stats():
+    """Displays network statistics."""
+    net_io = psutil.net_io_counters()
+    interfaces = psutil.net_if_addrs()
+
+    console = Console()
+    net_table = Table(show_header=True, header_style="bold cyan")
+    net_table.add_column("Metric")
+    net_table.add_column("Value", justify="right")
+
+    net_table.add_row("Bytes Sent", f"{net_io.bytes_sent / (1024 ** 2):.2f} MB")
+    net_table.add_row("Bytes Received", f"{net_io.bytes_recv / (1024 ** 2):.2f} MB")
+    net_table.add_row("Packets Sent", str(net_io.packets_sent))
+    net_table.add_row("Packets Received", str(net_io.packets_recv))
+
+    console.print("Network IO:", style="bold underline")
+    console.print(net_table)
+
+    for iface, addrs in interfaces.items():
+        iface_table = Table(show_header=True, header_style="bold green")
+        iface_table.add_column("Interface", style="dim")
+        iface_table.add_column("Address")
+        iface_table.add_column("Netmask")
+        iface_table.add_column("Broadcast", justify="right")
+
+        for addr in addrs:
+            if addr.family == psutil.AF_LINK:
+                # This is the MAC address
+                iface_table.add_row(iface, "MAC", addr.address, "")
+            else:
+                # IP addresses
+                iface_table.add_row(iface, addr.address, addr.netmask, addr.broadcast or "")
+
+        console.print(f"Interface: {iface}", style="bold underline")
+        console.print(iface_table)
 
 if __name__ == "__main__":
     app()
