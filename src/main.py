@@ -44,6 +44,45 @@ def memory_usage():
     console = Console()
     console.print(table)
 
+@app.command()
+def disk_usage():
+    """Shows disk usage statistics."""
+    console = Console()
+    table = Table(show_header=True, header_style="bold magenta")
+    table.add_column("Device", style="dim")
+    table.add_column("Mountpoint")
+    table.add_column("File System Type")
+    table.add_column("Total Size (GB)")
+    table.add_column("Used (GB)")
+    table.add_column("Free (GB)")
+    table.add_column("Usage (%)", justify="right")
+
+    for partition in psutil.disk_partitions():
+        usage = psutil.disk_usage(partition.mountpoint)
+        total = usage.total / (1024 ** 3)
+        used = usage.used / (1024 ** 3)
+        free = usage.free / (1024 ** 3)
+        percent = usage.percent
+
+        # Color coding based on usage percentage
+        if percent > 80:
+            usage_color = "red"
+        elif percent > 50:
+            usage_color = "yellow"
+        else:
+            usage_color = "green"
+
+        table.add_row(
+            partition.device,
+            partition.mountpoint,
+            partition.fstype,
+            f"{total:.2f}",
+            f"{used:.2f}",
+            f"{free:.2f}",
+            f"[{usage_color}]{percent}%[/]"
+        )
+
+    console.print(table)
 
 
 if __name__ == "__main__":
