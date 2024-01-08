@@ -1,5 +1,6 @@
 import typer
 import psutil
+import platform
 
 from rich.console import Console
 from rich.table import Table
@@ -120,6 +121,32 @@ def network_stats():
 
         console.print(f"Interface: {iface}", style="bold underline")
         console.print(iface_table)
+
+@app.command()
+def system_info():
+    """Displays general system information."""
+    console = Console()
+    info_table = Table(show_header=True, header_style="bold blue")
+    info_table.add_column("Category", style="dim")
+    info_table.add_column("Value", justify="right")
+
+    # System information
+    info_table.add_row("OS", platform.system())
+    info_table.add_row("OS Version", platform.version())
+    info_table.add_row("OS Release", platform.release())
+    info_table.add_row("Architecture", platform.architecture()[0])
+    info_table.add_row("Hostname", platform.node())
+    info_table.add_row("Uptime", format_uptime(psutil.boot_time()))
+
+    console.print("System Information:", style="bold underline")
+    console.print(info_table)
+
+def format_uptime(boot_time):
+    """Formats system uptime."""
+    uptime_seconds = psutil.time.time() - boot_time
+    hours, remainder = divmod(uptime_seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return f"{int(hours)}h {int(minutes)}m {int(seconds)}s"
 
 if __name__ == "__main__":
     app()
