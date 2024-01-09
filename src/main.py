@@ -1,6 +1,7 @@
 import typer
 import psutil
 import platform
+import speedtest_cli
 
 from rich.console import Console
 from rich.table import Table
@@ -147,6 +148,32 @@ def format_uptime(boot_time):
     hours, remainder = divmod(uptime_seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
     return f"{int(hours)}h {int(minutes)}m {int(seconds)}s"
+
+console = Console()
+
+@app.command()
+def network_speed_test():
+    """Tests the current network speed (download and upload)."""
+    try:
+        st = speedtest_cli.Speedtest()
+
+        # Get network speed details
+        download_speed = st.download()
+        upload_speed = st.upload()
+
+        # Display results in a table
+        table = Table(title="Network Speed Test Results", show_lines=True)
+        table.add_column("Metric", justify="right", style="cyan")
+        table.add_column("Speed", justify="right")
+
+        table.add_row("Download Speed", f"{download_speed / 10**6:.2f} Mbps")
+        table.add_row("Upload Speed", f"{upload_speed / 10**6:.2f} Mbps")
+
+        # Print the table
+        console.print(table)
+
+    except Exception as e:
+        console.print(f"Error conducting network speed test: {str(e)}", style="bold red")
 
 if __name__ == "__main__":
     app()
