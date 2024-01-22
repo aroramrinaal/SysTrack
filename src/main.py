@@ -5,6 +5,7 @@ import speedtest_cli
 
 from rich.console import Console
 from rich.table import Table
+from rich.progress import Progress
 
 app = typer.Typer()
 
@@ -174,6 +175,47 @@ def network_speed_test():
 
     except Exception as e:
         console.print(f"Error conducting network speed test: {str(e)}", style="bold red")
+
+@app.command()
+def battery_health():
+    """Shows the current battery health status."""
+    battery = psutil.sensors_battery()
+    console = Console()
+
+    if battery:
+        table = Table(show_header=True, header_style="bold green")
+        table.add_column("Attribute", style="dim")
+        table.add_column("Value")
+
+        # Battery status
+        percent = battery.percent
+        table.add_row("Charge Level", f"{percent}%")
+        
+        # Using rich's Progress Bar to visually represent battery level
+        with Progress(console=console, expand=True) as progress:
+            task = progress.add_task("[green]Charging...", total=100)
+            progress.update(task, completed=percent)
+
+        if battery.power_plugged:
+            status = "Charging" if percent < 100 else "Fully Charged"
+        else:
+            status = "Discharging"
+        table.add_row("Status", status)
+
+        # Estimated time remaining
+        secsleft = battery.secsleft
+        if secsleft == psutil.POWER_TIME_UNKNOWN:
+            time_left = "Unknown"
+        else:
+            hours, remainder = divmod(secsleft, 3600)
+            minutes, _ = divmod(remainder, 60)
+            time_left = f"{int(hours)}h {int(minutes)}m"
+        table.add_row("Time Remaining", time_left)
+
+        console.print(table)
+    else:
+        console.print("No battery information available", style="bold red")
+
 
 if __name__ == "__main__":
     app()
